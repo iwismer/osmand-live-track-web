@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+    crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+    integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+    crossorigin=""></script>
+
+  <title>Live Tracking</title>
+  <style>
+    #mapid {
+      height: 80vh;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Live Tracking</h2>
+  <div>
+    <strong>Start time: </strong><span id="start"></span>
+    <br>
+    <strong>Last check-in: </strong><span id="last"></span>
+  </div>
+  <div id="mapid"></div>
+</body>
+
+<script>
+  var map = L.map('mapid').setView([46.0813, -81.4049], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+  }).addTo(map);
+  L.control.scale().addTo(map);
+
+  fetch('/locations')
+    .then(response => response.json())
+    .then(function (json) {
+      var linePoints = []
+      json.forEach((location, i) => {
+        var date = new Date(parseInt(location.timestamp));
+        linePoints.push([location.lat, location.lon]);
+        L.circle({ lon: location.lon, lat: location.lat }, { radius: parseFloat(location.hdop), color: (i == json.length - 1 ? '#199900' : '#3388ff') }).bindPopup(`<strong>Timestamp:</strong> ${date}<br><strong>Lat:</strong> ${location.lat}<br><strong>Lon:</strong> ${location.lon}<br><strong>Altitude:</strong> ${location.altitude}m<br><strong>Speed:</strong> ${location.speed}km/h<br><strong>Bearing:</strong> ${location.bearing}&#176;<br><strong>Error:</strong> ${location.hdop}m`).addTo(map);
+      });
+      if (linePoints.length > 0) {
+        var polyline = L.polyline(linePoints, { color: 'red' }).addTo(map);
+        polyline.bringToBack();
+        map.fitBounds(polyline.getBounds());
+        document.getElementById("start").textContent = new Date(parseInt(json[0].timestamp));
+        document.getElementById("last").textContent = new Date(parseInt(json[json.length - 1].timestamp));
+      }
+    });
+</script>
+
+</html>
