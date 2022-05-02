@@ -5,11 +5,10 @@ authors = ["Isaac Wismer <isaac@iwismer.ca>"]
 edition = "2018"
 
 [dependencies]
-actix-web = "3.3.2"
-actix-files = "0.5.0"
+actix-web = "4.0.1"
+actix-files = "0.6.0"
 env_logger = "0.9.0"
-log = { version = "0.4.14", features = ["max_level_debug", "release_max_level_info"] }
-once_cell = "1.8.0"
-serde = "1.0.126"
-# 0.4.2 is required for use with actix 3
-sqlx = { version = "0.4.2", features = [ "runtime-actix-native-tls", "sqlite" ] }
+log = { version = "0.4.16", features = ["max_level_debug", "release_max_level_info"] }
+once_cell = "1.10.0"
+serde = { version = "1.0.137", features = [ "derive" ] }
+sqlx = { version = "0.5.13", features = [ "runtime-actix-native-tls", "sqlite" ] }

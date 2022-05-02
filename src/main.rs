@@ -4,8 +4,8 @@ use log::info;
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use sqlx::{migrate::MigrateDatabase, Row, SqlitePool};
-use std::fs;
 use std::env;
+use std::fs;
 
 static DB_CONN: OnceCell<SqlitePool> = OnceCell::new();
 static TOKEN: OnceCell<String> = OnceCell::new();
@@ -74,7 +74,7 @@ pub struct Location {
 #[get("/log")]
 async fn log_point(_req: HttpRequest, info: web::Query<Location>) -> HttpResponse {
     if &info.token != TOKEN.get().expect("No Token Supplied") {
-        return HttpResponse::Unauthorized().body("ERROR: Invalid Token")
+        return HttpResponse::Unauthorized().body("ERROR: Invalid Token");
     }
     let conn = match db_conn().await {
         Ok(c) => c,
@@ -126,16 +126,15 @@ async fn locations(_req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(points)
 }
 
-
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Token {
-    token: String
+    token: String,
 }
 
 #[get("/reset")]
 async fn reset(_req: HttpRequest, info: web::Query<Token>) -> HttpResponse {
     if &info.token != TOKEN.get().expect("No Token Supplied") {
-        return HttpResponse::Unauthorized().body("ERROR: Invalid Token")
+        return HttpResponse::Unauthorized().body("ERROR: Invalid Token");
     }
     let conn = match db_conn().await {
         Ok(c) => c,
@@ -158,18 +157,16 @@ async fn main() -> std::io::Result<()> {
     setup_db().await.expect("Unable to setup database.");
     info!("Database setup complete.");
     info!("Database setup complete.");
-    TOKEN.set(env::var("TOKEN").expect("No token supplied.")).expect("Error setting token.");
+    TOKEN
+        .set(env::var("TOKEN").expect("No token supplied."))
+        .expect("Error setting token.");
     println!("Starting http server: 0.0.0.0:8080");
     std::env::set_var("RUST_LOG", "actix_web=info");
     // start http server
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Compress::default())
-            // Remove multiple trailing slashes
-            .wrap(middleware::NormalizePath::new(
-                middleware::normalize::TrailingSlash::Trim,
-            ))
-            // enable logger
+            .wrap(middleware::NormalizePath::trim())
             .wrap(middleware::Logger::default())
             .service(home)
             .service(log_point)
